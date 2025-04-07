@@ -1,0 +1,4 @@
+src/lexicon
+node_modules
+dist
+tsconfig.tsbuildinfo
