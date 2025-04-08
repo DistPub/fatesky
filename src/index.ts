@@ -199,7 +199,7 @@ export class BskyAppView {
     app.use(imageServer.createMiddleware(ctx, { prefix: '/img/' }))
     app.use(server.xrpc.router)
     app.use(error.handler)
-    console.log(123)
+    
     return new BskyAppView({ ctx, app })
   }
 
