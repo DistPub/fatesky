@@ -13,6 +13,12 @@ import { Service } from './proto/bsync_connect'
 
 export type BsyncClient = PromiseClient<typeof Service>
 
+export const createMockBsyncClient = (
+  opts: ConnectTransportOptions,
+): BsyncClient => {
+  return {} as BsyncClient
+}
+
 export const createBsyncClient = (
   opts: ConnectTransportOptions,
 ): BsyncClient => {

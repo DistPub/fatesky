@@ -18,6 +18,13 @@ export type DataPlaneClient = PromiseClient<typeof Service>
 type HttpVersion = '1.1' | '2'
 const MAX_RETRIES = 3
 
+export const createMockDataPlaneClient = (
+  hostList: HostList,
+  opts: { httpVersion?: HttpVersion; rejectUnauthorized?: boolean },
+) => {
+  return {} as DataPlaneClient
+}
+
 export const createDataPlaneClient = (
   hostList: HostList,
   opts: { httpVersion?: HttpVersion; rejectUnauthorized?: boolean },

@@ -13,14 +13,14 @@ import { IdResolver } from '@atproto/identity'
 import API, { blobResolver, health, wellKnown } from './api'
 import { createBlobDispatcher } from './api/blob-dispatcher'
 import { AuthVerifier, createPublicKeyObject } from './auth-verifier'
-import { authWithApiKey as bsyncAuth, createBsyncClient } from './bsync'
+import { authWithApiKey as bsyncAuth, createMockBsyncClient } from './bsync'
 import { ServerConfig } from './config'
 import { AppContext } from './context'
 import { authWithApiKey as courierAuth, createCourierClient } from './courier'
 import {
   BasicHostList,
   EtcdHostList,
-  createDataPlaneClient,
+  createMockDataPlaneClient,
 } from './data-plane/client'
 import * as error from './error'
 import { FeatureGates } from './feature-gates'
@@ -116,7 +116,7 @@ export class BskyAppView {
           )
         : new BasicHostList(config.dataplaneUrls)
 
-    const dataplane = createDataPlaneClient(dataplaneHostList, {
+    const dataplane = createMockDataPlaneClient(dataplaneHostList, {
       httpVersion: config.dataplaneHttpVersion,
       rejectUnauthorized: !config.dataplaneIgnoreBadTls,
     })
@@ -127,7 +127,7 @@ export class BskyAppView {
       indexedAtEpoch: config.indexedAtEpoch,
     })
 
-    const bsyncClient = createBsyncClient({
+    const bsyncClient = createMockBsyncClient({
       baseUrl: config.bsyncUrl,
       httpVersion: config.bsyncHttpVersion ?? '2',
       nodeOptions: { rejectUnauthorized: !config.bsyncIgnoreBadTls },
@@ -199,7 +199,7 @@ export class BskyAppView {
     app.use(imageServer.createMiddleware(ctx, { prefix: '/img/' }))
     app.use(server.xrpc.router)
     app.use(error.handler)
-
+    console.log(123)
     return new BskyAppView({ ctx, app })
   }
 
