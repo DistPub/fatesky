@@ -474,7 +474,7 @@ export class Hydrator {
       starterPackState,
       postgates,
     ] = await Promise.all([
-      this.feed.getPostAggregates(allRefs),
+      this.feed.getPostAggregates(allRefs, state),
       ctx.viewer
         ? this.feed.getPostViewerStates(threadRefs, ctx.viewer)
         : undefined,

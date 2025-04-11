@@ -1,5 +1,5 @@
 import { dedupeStrs } from '@atproto/common'
-import { DataPlaneClient } from '../data-plane/client'
+import { DataPlaneClient, MockDataPlaneClient } from '../data-plane/client'
 import { Record as FeedGenRecord } from '../lexicon/types/app/bsky/feed/generator'
 import { Record as LikeRecord } from '../lexicon/types/app/bsky/feed/like'
 import { Record as PostRecord } from '../lexicon/types/app/bsky/feed/post'
@@ -19,6 +19,7 @@ import {
   parseString,
   split,
 } from './util'
+import { HydrationState } from './hydrator'
 
 export type Post = RecordInfo<PostRecord> & {
   violatesThreadGate: boolean
@@ -206,9 +207,10 @@ export class FeedHydrator {
     }, new HydrationMap<ThreadContext>())
   }
 
-  async getPostAggregates(refs: ItemRef[]): Promise<PostAggs> {
+  async getPostAggregates(refs: ItemRef[], state: HydrationState): Promise<PostAggs> {
     if (!refs.length) return new HydrationMap<PostAgg>()
-    const counts = await this.dataplane.getInteractionCounts({ refs })
+    const dataplane = this.dataplane as unknown as MockDataPlaneClient
+    const counts = await dataplane.getInteractionCounts({ refs, state })
     return refs.reduce((acc, { uri }, i) => {
       return acc.set(uri, {
         likes: counts.likes[i] ?? 0,

@@ -1,4 +1,4 @@
-import { Post } from "../../hydration/feed"
+import { Post, PostAgg, PostAggs } from "../../hydration/feed"
 import { HydrationState } from "../../hydration/hydrator"
 import { HydrationMap } from "../../hydration/util"
 
@@ -38,11 +38,31 @@ export class MockDataPlaneClient {
         let data = await this.xrpc('app.bsky.feed.getPostThread', {params: req.params})
         return {uris: lookupUri(data, req.state)}
     }
+    async getInteractionCounts(req: { refs: any, state: HydrationState }) {
+        let likes: number[] = []
+        let reposts: number[] = []
+        let replies: number[] = []
+        let quotes: number[] = []
+        let postAggs = req.state.postAggs as PostAggs
+        for (let {uri} of req.refs) {
+            const counter = postAggs.get(uri) as PostAgg
+            likes.push(counter.likes)
+            reposts.push(counter.reposts)
+            replies.push(counter.replies)
+            quotes.push(counter.quotes)
+        }
+        return { likes, reposts, replies, quotes }
+    }
+    async getLabels({subjects, issuers}) {
+        console.log(subjects)
+        console.log(issuers)
+    }
 }
 
 function lookupUri(data, state: HydrationState) {
     let uris: string[] = []
     state.posts ??= new HydrationMap<Post>()
+    state.postAggs ??= new HydrationMap<PostAgg>()
     for (let key in data) {
         if (data.hasOwnProperty(key)) {
             let value = data[key]
@@ -58,7 +78,13 @@ function lookupUri(data, state: HydrationState) {
                     violatesThreadGate: false,
                     violatesEmbeddingRules: false,
                     hasThreadGate: false,
-                    hasPostGate: false
+                    hasPostGate: false,
+                })
+                state.postAggs.set(value, {
+                    likes: data.likeCount,
+                    replies: data.replyCount,
+                    reposts: data.repostCount,
+                    quotes: data.quoteCount,
                 })
             } else if (value !== null && typeof value === 'object') {
                 uris = uris.concat(lookupUri(value, state))
