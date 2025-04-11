@@ -14,6 +14,7 @@ import { MockDataPlaneClient } from './bsky'
 
 export * from './hosts'
 export * from './util'
+export * from './bsky'
 
 export type DataPlaneClient = PromiseClient<typeof Service>
 type HttpVersion = '1.1' | '2'

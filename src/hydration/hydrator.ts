@@ -70,6 +70,7 @@ export class HydrateCtx {
   includeTakedowns = this.vals.includeTakedowns
   includeActorTakedowns = this.vals.includeActorTakedowns
   include3pBlocks = this.vals.include3pBlocks
+  state: HydrationState = {}
   constructor(private vals: HydrateCtxVals) {}
   copy<V extends Partial<HydrateCtxVals>>(vals?: V): HydrateCtx & V {
     return new HydrateCtx({ ...this.vals, ...vals }) as HydrateCtx & V
@@ -634,7 +635,7 @@ export class Hydrator {
     refs: ItemRef[],
     ctx: HydrateCtx,
   ): Promise<HydrationState> {
-    const postsState = await this.hydratePosts(refs, ctx)
+    const postsState = await this.hydratePosts(refs, ctx, ctx.state)
 
     const { posts } = postsState
     const postsList = posts ? Array.from(posts.entries()) : []

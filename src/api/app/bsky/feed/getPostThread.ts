@@ -1,7 +1,7 @@
 import { InvalidRequestError } from '@atproto/xrpc-server'
 import { ServerConfig } from '../../../../config'
 import { AppContext } from '../../../../context'
-import { Code, DataPlaneClient, isDataplaneError } from '../../../../data-plane'
+import { Code, DataPlaneClient, isDataplaneError, MockDataPlaneClient } from '../../../../data-plane'
 import { HydrateCtx, Hydrator } from '../../../../hydration/hydrator'
 import { Server } from '../../../../lexicon'
 import { isNotFoundPost } from '../../../../lexicon/types/app/bsky/feed/defs'
@@ -69,11 +69,9 @@ const skeleton = async (inputs: SkeletonFnInput<Context, Params>) => {
   const { ctx, params } = inputs
   const anchor = await ctx.hydrator.resolveUri(params.uri)
   try {
-    const res = await ctx.dataplane.getThread({
-      postUri: anchor,
-      above: params.parentHeight,
-      below: getDepth(ctx, anchor, params),
-    })
+    const dataplane = ctx.dataplane as unknown as MockDataPlaneClient
+    const {uri, depth, parentHeight} = params
+    const res = await dataplane.getThread({params: {uri, depth, parentHeight}, state: params.hydrateCtx.state})
     return {
       anchor,
       uris: res.uris,
