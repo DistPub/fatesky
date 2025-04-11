@@ -10,6 +10,7 @@ export interface ServerConfigValues {
   alternateAudienceDids: string[]
   entrywayJwtPublicKeyHex?: string
   // external services
+  bskyHost: string
   etcdHosts: string[]
   dataplaneUrls: string[]
   dataplaneUrlsEtcdKeyPrefix?: string
@@ -69,6 +70,7 @@ export class ServerConfig {
   constructor(private cfg: ServerConfigValues) {}
 
   static readEnv(overrides?: Partial<ServerConfigValues>) {
+    const bskyHost = process.env.BSKY_HOST || 'public.api.bsky.app'
     const version = process.env.BSKY_VERSION || undefined
     const debugMode =
       // Because security related features are disabled in development mode, this requires explicit opt-in.
@@ -193,6 +195,7 @@ export class ServerConfig {
       process.env.BSKY_PROXY_PREFER_COMPRESSED === 'true'
 
     return new ServerConfig({
+      bskyHost,
       version,
       debugMode,
       port,
@@ -255,6 +258,10 @@ export class ServerConfig {
       'Conflicting port in config',
     )
     this.assignedPort = port
+  }
+
+  get bskyHost() {
+    return this.cfg.bskyHost
   }
 
   get version() {

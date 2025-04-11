@@ -116,10 +116,7 @@ export class BskyAppView {
           )
         : new BasicHostList(config.dataplaneUrls)
 
-    const dataplane = createMockDataPlaneClient(dataplaneHostList, {
-      httpVersion: config.dataplaneHttpVersion,
-      rejectUnauthorized: !config.dataplaneIgnoreBadTls,
-    })
+    const dataplane = createMockDataPlaneClient(config.bskyHost)
     const hydrator = new Hydrator(dataplane, config.labelsFromIssuerDids)
     const views = new Views({
       imgUriBuilder: imgUriBuilder,

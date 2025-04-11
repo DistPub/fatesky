@@ -10,6 +10,7 @@ import {
 import { createGrpcTransport } from '@connectrpc/connect-node'
 import { Service } from '../../proto/bsky_connect'
 import { HostList } from './hosts'
+import { MockDataPlaneClient } from './bsky'
 
 export * from './hosts'
 export * from './util'
@@ -18,11 +19,8 @@ export type DataPlaneClient = PromiseClient<typeof Service>
 type HttpVersion = '1.1' | '2'
 const MAX_RETRIES = 3
 
-export const createMockDataPlaneClient = (
-  hostList: HostList,
-  opts: { httpVersion?: HttpVersion; rejectUnauthorized?: boolean },
-) => {
-  return {} as DataPlaneClient
+export const createMockDataPlaneClient = (host: string) => {
+  return new MockDataPlaneClient(host) as unknown as DataPlaneClient
 }
 
 export const createDataPlaneClient = (
