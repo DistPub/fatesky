@@ -54,8 +54,11 @@ export class MockDataPlaneClient {
         return { likes, reposts, replies, quotes }
     }
     async getLabels({subjects, issuers}) {
-        console.log(subjects)
-        console.log(issuers)
+        const uriPatterns = [...new Set(subjects)]
+        const sources = [...new Set(issuers)]
+        const limit = 250
+        const data = await this.xrpc('com.atproto.label.queryLabels', {params: {uriPatterns, sources, limit}}) as {labels: any[]}
+        return {labels: data.labels}
     }
 }
 

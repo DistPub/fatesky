@@ -78,7 +78,7 @@ export class LabelHydrator {
     })
 
     return res.labels.reduce((acc, cur) => {
-      const parsed = parseJsonBytes(cur) as Label | undefined
+      const parsed = cur as unknown as Label | undefined
       if (!parsed || parsed.neg) return acc
       const { sig: _, ...label } = parsed
       let entry = acc.get(label.uri)
