@@ -98,6 +98,12 @@ export class MockDataPlaneClient {
     async getLikesByActorAndSubjects({ actorDid, refs }) {
         return {uris: []}
     }
+    async getRepostsByActorAndSubjects({ actorDid, refs }) {
+        return {uris: []}
+    }
+    async getThreadMutesOnSubjects({ actorDid, threadRoots }) {
+        return {muted: []}
+    }
     async getIdentityByDid({ did }) {
         const doc = await resolveDidDoc(did)
         const keys = {}
