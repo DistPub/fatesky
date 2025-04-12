@@ -314,7 +314,7 @@ export class AuthVerifier {
         }
         throw err
       }
-      const keys = unpackIdentityKeys(identity.keys)
+      const keys = identity.keys as any
       const didKey = getKeyAsDidKey(keys, { id: keyId })
       if (!didKey) {
         throw new AuthRequiredError('missing or bad key')

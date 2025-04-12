@@ -83,7 +83,10 @@ export class MockDataPlaneClient {
         const actors: any[] = []
         const lets = req.state?.actors as HydrationMap<Actor>
         for (let did of req.dids) {
-            const data = lets.get(did) ?? {} as any
+            let data = lets ? lets.get(did) ?? {} : {} as any
+
+            if (!data.did) data = await this.xrpc('app.bsky.actor.getProfile', {params: {actor: did}})
+
             actors.push({
                 ...data,
                 exists: data.did ? true : false,
@@ -92,12 +95,34 @@ export class MockDataPlaneClient {
         }
         return {actors}
     }
-    async getLikesByActorAndSubjects({
-        actorDid,
-        refs
-      }) {
+    async getLikesByActorAndSubjects({ actorDid, refs }) {
         return {uris: []}
-      }
+    }
+    async getIdentityByDid({ did }) {
+        const doc = await resolveDidDoc(did)
+        const keys = {}
+        for (let item of doc.verificationMethod) {
+            let id = item.id.split('#')[1]
+            keys[id] = {
+                Type: item.type,
+                PublicKeyMultibase: item.publicKeyMultibase
+            }
+        }
+        return {keys}
+    }
+}
+
+async function resolveDidDoc(at_did) {
+	let did_uri = ''
+	if (at_did.startsWith('did:plc:')) {
+		did_uri = `https://plc.directory/${at_did}`
+	} else {
+		did_uri = `https://${at_did.slice('did:web:'.length)}/.well-known/did.json`
+	}
+
+	let response = await fetch(did_uri)
+	let result = await response.json() as any
+    return result
 }
 
 function lookupUri(data, state: HydrationState) {
