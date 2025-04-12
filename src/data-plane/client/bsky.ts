@@ -1,5 +1,5 @@
 import { Code, ConnectError } from "@connectrpc/connect"
-import { Post, PostAgg, PostAggs } from "../../hydration/feed"
+import { Post, PostAgg, PostAggs, ThreadContext } from "../../hydration/feed"
 import { Actor } from "../../hydration/actor"
 import { HydrationState } from "../../hydration/hydrator"
 import { HydrationMap } from "../../hydration/util"
@@ -105,6 +105,7 @@ function lookupUri(data, state: HydrationState) {
     state.posts ??= new HydrationMap<Post>()
     state.postAggs ??= new HydrationMap<PostAgg>()
     state.actors ??= new HydrationMap<Actor>()
+    state.threadContexts ??= new HydrationMap<ThreadContext>()
     for (let key in data) {
         if (data.hasOwnProperty(key)) {
             let value = data[key]
