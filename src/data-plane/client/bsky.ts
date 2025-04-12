@@ -83,9 +83,11 @@ export class MockDataPlaneClient {
         const actors: any[] = []
         const lets = req.state?.actors as HydrationMap<Actor>
         for (let did of req.dids) {
+            const data = lets.get(did) ?? {} as any
             actors.push({
-                ...lets.get(did),
-                exists: true
+                ...data,
+                exists: data.did ? true : false,
+                createdAt: new Date(data?.profile?.record?.createdAt ?? 0)
             })
         }
         return {actors}
@@ -108,10 +110,11 @@ function lookupUri(data, state: HydrationState) {
             let value = data[key]
 
             if (data.did && data.handle) {
+                let profile_cid = data.avatar.split(`${data.did}/`)[1].split('@')[0]
                 state.actors.set(data.did, {
                     did: data.did,
-                    handle: data.did,
-                    profile: data,
+                    handle: data.handle,
+                    profile: {record: {...data, avatar: {cid: profile_cid}}, cid: profile_cid} as any,
                     isLabeler: false,
                     priorityNotifications: false
                 })
@@ -125,8 +128,8 @@ function lookupUri(data, state: HydrationState) {
                     state.posts.set(value, {
                         record: data.record || data.value,
                         cid: data.cid,
-                        sortedAt: data.sortedAt,
-                        indexedAt: data.indexedAt,
+                        sortedAt: data.sortedAt ? new Date(data.sortedAt) : new Date(0),
+                        indexedAt: data.indexedAt ? new Date(data.indexedAt) : new Date(0),
                         takedownRef: undefined,
                         violatesThreadGate: false,
                         violatesEmbeddingRules: false,

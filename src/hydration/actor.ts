@@ -131,7 +131,7 @@ export class ActorHydrator {
         isLabeler: actor.labeler ?? false,
         allowIncomingChatsFrom: actor.allowIncomingChatsFrom || undefined,
         upstreamStatus: actor.upstreamStatus || undefined,
-        createdAt: actor.createdAt?.toDate(),
+        createdAt: actor.createdAt,
         priorityNotifications: actor.priorityNotifications,
       })
     }, new HydrationMap<Actor>())
