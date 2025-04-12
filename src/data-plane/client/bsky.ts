@@ -1,3 +1,4 @@
+import { Code, ConnectError } from "@connectrpc/connect"
 import { Post, PostAgg, PostAggs } from "../../hydration/feed"
 import { HydrationState } from "../../hydration/hydrator"
 import { HydrationMap } from "../../hydration/util"
@@ -35,7 +36,8 @@ export class MockDataPlaneClient {
         return {dids}
     }
     async getThread(req: {params: any, state: HydrationState}) {
-        let data = await this.xrpc('app.bsky.feed.getPostThread', {params: req.params})
+        let data = await this.xrpc('app.bsky.feed.getPostThread', {params: req.params}) as any
+        if (data.error === 'NotFound') throw new ConnectError(data.message, Code.NotFound)
         return {uris: lookupUri(data, req.state)}
     }
     async getInteractionCounts(req: { refs: any, state: HydrationState }) {
@@ -46,10 +48,10 @@ export class MockDataPlaneClient {
         let postAggs = req.state.postAggs as PostAggs
         for (let {uri} of req.refs) {
             const counter = postAggs.get(uri) as PostAgg
-            likes.push(counter.likes)
-            reposts.push(counter.reposts)
-            replies.push(counter.replies)
-            quotes.push(counter.quotes)
+            likes.push(counter?.likes)
+            reposts.push(counter?.reposts)
+            replies.push(counter?.replies)
+            quotes.push(counter?.quotes)
         }
         return { likes, reposts, replies, quotes }
     }
@@ -59,6 +61,15 @@ export class MockDataPlaneClient {
         const limit = 250
         const data = await this.xrpc('com.atproto.label.queryLabels', {params: {uriPatterns, sources, limit}}) as {labels: any[]}
         return {labels: data.labels}
+    }
+    async getLabelerRecords({ uris }) {
+        let records: any[] = []
+        for (let uri of uris) {
+            const [repo, collection, rkey] = uri.slice('at://'.length).split('/')
+            const data = await this.xrpc('com.atproto.repo.getRecord', {params: {repo, collection, rkey}}) as any
+            records.push({ record: data.value, cid: data.cid, sortedAt: new Date(0), indexedAt: new Date(0), takedownRef: undefined })
+        }
+        return {records}
     }
 }
 
@@ -70,31 +81,35 @@ function lookupUri(data, state: HydrationState) {
         if (data.hasOwnProperty(key)) {
             let value = data[key]
 
-            if (key === 'uri' && data.record) {
-                uris.push(value)
-                state.posts.set(value, {
-                    record: data.record,
-                    cid: data.cid,
-                    sortedAt: data.sortedAt,
-                    indexedAt: data.indexAt,
-                    takedownRef: undefined,
-                    violatesThreadGate: false,
-                    violatesEmbeddingRules: false,
-                    hasThreadGate: false,
-                    hasPostGate: false,
-                })
-                state.postAggs.set(value, {
-                    likes: data.likeCount,
-                    replies: data.replyCount,
-                    reposts: data.repostCount,
-                    quotes: data.quoteCount,
-                })
+            if (key === 'uri' && (data.record || data.value || data.notFound)) {
+                if (data.record) uris.push(value)
+                if (data.notFound) {
+                    state.posts.set(value, null)
+                } else {
+                    state.posts.set(value, {
+                        record: data.record || data.value,
+                        cid: data.cid,
+                        sortedAt: data.sortedAt,
+                        indexedAt: data.indexedAt,
+                        takedownRef: undefined,
+                        violatesThreadGate: false,
+                        violatesEmbeddingRules: false,
+                        hasThreadGate: false,
+                        hasPostGate: false,
+                    })
+                    state.postAggs.set(value, {
+                        likes: data.likeCount,
+                        replies: data.replyCount,
+                        reposts: data.repostCount,
+                        quotes: data.quoteCount,
+                    })
+                }
             } else if (value !== null && typeof value === 'object') {
                 uris = uris.concat(lookupUri(value, state))
             } else if (Array.isArray(value)) {
                 for (let item of value) {
                     if (item !== null && typeof item === 'object') {
-                        lookupUri(item, state)
+                        uris = uris.concat(lookupUri(item, state))
                     }
                 }
             }

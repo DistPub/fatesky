@@ -983,7 +983,7 @@ export class Hydrator {
     const [labelers, labelerAggs, labelerViewers, profileState] =
       await Promise.all([
         this.label.getLabelers(dids, ctx.includeTakedowns),
-        this.label.getLabelerAggregates(dids),
+        this.label.getLabelerAggregates(dids, ctx.state),
         ctx.viewer
           ? this.label.getLabelerViewerStates(dids, ctx.viewer)
           : undefined,

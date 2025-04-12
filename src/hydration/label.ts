@@ -1,5 +1,5 @@
 import { AtUri } from '@atproto/syntax'
-import { DataPlaneClient } from '../data-plane/client'
+import { DataPlaneClient, MockDataPlaneClient } from '../data-plane/client'
 import { ids } from '../lexicon/lexicons'
 import { Record as LabelerRecord } from '../lexicon/types/app/bsky/labeler/service'
 import { Label } from '../lexicon/types/com/atproto/label/defs'
@@ -72,7 +72,8 @@ export class LabelHydrator {
     labelers: ParsedLabelers,
   ): Promise<Labels> {
     if (!subjects.length || !labelers.dids.length) return new Labels()
-    const res = await this.dataplane.getLabels({
+    const dataplane = this.dataplane as unknown as MockDataPlaneClient
+    const res = await dataplane.getLabels({
       subjects,
       issuers: labelers.dids,
     })
@@ -118,14 +119,12 @@ export class LabelHydrator {
     dids: string[],
     includeTakedowns = false,
   ): Promise<Labelers> {
-    const res = await this.dataplane.getLabelerRecords({
+    const dataplane = this.dataplane as unknown as MockDataPlaneClient
+    const res = await dataplane.getLabelerRecords({
       uris: dids.map(labelerDidToUri),
     })
     return dids.reduce((acc, did, i) => {
-      const record = parseRecord<LabelerRecord>(
-        res.records[i],
-        includeTakedowns,
-      )
+      const record = res.records[i]
       return acc.set(did, record ?? null)
     }, new HydrationMap<Labeler>())
   }
@@ -145,9 +144,10 @@ export class LabelHydrator {
     }, new HydrationMap<LabelerViewerState>())
   }
 
-  async getLabelerAggregates(dids: string[]): Promise<LabelerAggs> {
+  async getLabelerAggregates(dids: string[], state): Promise<LabelerAggs> {
     const refs = dids.map((did) => ({ uri: labelerDidToUri(did) }))
-    const counts = await this.dataplane.getInteractionCounts({ refs })
+    const dataplane = this.dataplane as unknown as MockDataPlaneClient
+    const counts = await dataplane.getInteractionCounts({ refs, state })
     return dids.reduce((acc, did, i) => {
       return acc.set(did, {
         likes: counts.likes[i] ?? 0,
