@@ -10,7 +10,13 @@ export class MockDataPlaneClient {
         let api = new URL(`https://${this.host}/xrpc/${handler}`)
         let searchParams = new URLSearchParams()
         for (const [key, value] of Object.entries(params)) {
-            searchParams.set(key, value as any)
+            if (Array.isArray(value)) {
+                for (let item of value) {
+                    searchParams.append(key, item as any)
+                }
+            } else {
+                searchParams.set(key, value as any)
+            }
         }
         api.search = searchParams.toString()
 
