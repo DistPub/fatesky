@@ -104,6 +104,24 @@ export class MockDataPlaneClient {
     async getThreadMutesOnSubjects({ actorDid, threadRoots }) {
         return {muted: []}
     }
+    async getRelationships({ actorDid, targetDids }) {
+        const relationships: any[] = []
+        for (let target of targetDids) {
+            relationships.push({
+                // actor set to target
+                muted: null,
+                mutedByList: '',
+                blockedBy: '',
+                blockedByList: '',
+                followedBy: '',
+                // target set to actor
+                blocking: '',
+                blockingByList: '',
+                following: '',
+            })
+        }
+        return {relationships}
+    }
     async getIdentityByDid({ did }) {
         const doc = await resolveDidDoc(did)
         const keys = {}
