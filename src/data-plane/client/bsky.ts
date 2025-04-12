@@ -128,7 +128,7 @@ function lookupUri(data, state: HydrationState) {
                     state.posts.set(value, {
                         record: data.record || data.value,
                         cid: data.cid,
-                        sortedAt: data.sortedAt ? new Date(data.sortedAt) : new Date(0),
+                        sortedAt: data.indexedAt ? new Date(data.indexedAt) : new Date(0),
                         indexedAt: data.indexedAt ? new Date(data.indexedAt) : new Date(0),
                         takedownRef: undefined,
                         violatesThreadGate: false,
