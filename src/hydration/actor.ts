@@ -1,4 +1,4 @@
-import { DataPlaneClient } from '../data-plane/client'
+import { DataPlaneClient, MockDataPlaneClient } from '../data-plane/client'
 import { Record as ProfileRecord } from '../lexicon/types/app/bsky/actor/profile'
 import { Record as ChatDeclarationRecord } from '../lexicon/types/chat/bsky/actor/declaration'
 import {
@@ -100,9 +100,10 @@ export class ActorHydrator {
     return res.filter((did) => did !== undefined)
   }
 
-  async getActors(dids: string[], includeTakedowns = false): Promise<Actors> {
+  async getActors(dids: string[], includeTakedowns = false, state: any = null): Promise<Actors> {
     if (!dids.length) return new HydrationMap<Actor>()
-    const res = await this.dataplane.getActors({ dids })
+    const dataplane = this.dataplane as unknown as MockDataPlaneClient
+    const res = await dataplane.getActors({ dids, state })
     return dids.reduce((acc, did, i) => {
       const actor = res.actors[i]
       const isNoHosted =
@@ -117,8 +118,6 @@ export class ActorHydrator {
       }
 
       const profile = actor.profile
-        ? parseRecord<ProfileRecord>(actor.profile, includeTakedowns)
-        : undefined
 
       return acc.set(did, {
         did,

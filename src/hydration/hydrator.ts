@@ -192,7 +192,7 @@ export class Hydrator {
   ): Promise<HydrationState> {
     const includeTakedowns = ctx.includeTakedowns || ctx.includeActorTakedowns
     const [actors, labels, profileViewersState] = await Promise.all([
-      this.actor.getActors(dids, includeTakedowns),
+      this.actor.getActors(dids, includeTakedowns, ctx.state),
       this.label.getLabelsForSubjects(labelSubjectsForDid(dids), ctx.labelers),
       this.hydrateProfileViewers(dids, ctx),
     ])

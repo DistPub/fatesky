@@ -1,5 +1,6 @@
 import { Code, ConnectError } from "@connectrpc/connect"
 import { Post, PostAgg, PostAggs } from "../../hydration/feed"
+import { Actor } from "../../hydration/actor"
 import { HydrationState } from "../../hydration/hydrator"
 import { HydrationMap } from "../../hydration/util"
 
@@ -71,15 +72,44 @@ export class MockDataPlaneClient {
         }
         return {records}
     }
+    async getBlockExistence({ pairs: deduped }) {
+        let blocks: any[] = []
+        for(let item of deduped) {
+            blocks.push({})
+        }
+        return {blocks}
+    }
+    async getActors(req: { dids, state: HydrationState | null }) {
+        const actors: any[] = []
+        const lets = req.state?.actors as HydrationMap<Actor>
+        for (let did of req.dids) {
+            actors.push({
+                ...lets.get(did),
+                exists: true
+            })
+        }
+        return {actors}
+    }
 }
 
 function lookupUri(data, state: HydrationState) {
     let uris: string[] = []
     state.posts ??= new HydrationMap<Post>()
     state.postAggs ??= new HydrationMap<PostAgg>()
+    state.actors ??= new HydrationMap<Actor>()
     for (let key in data) {
         if (data.hasOwnProperty(key)) {
             let value = data[key]
+
+            if (data.did && data.handle) {
+                state.actors.set(data.did, {
+                    did: data.did,
+                    handle: data.did,
+                    profile: data,
+                    isLabeler: false,
+                    priorityNotifications: false
+                })
+            }
 
             if (key === 'uri' && (data.record || data.value || data.notFound)) {
                 if (data.record) uris.push(value)
