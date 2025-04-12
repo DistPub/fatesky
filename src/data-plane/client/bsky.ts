@@ -90,6 +90,12 @@ export class MockDataPlaneClient {
         }
         return {actors}
     }
+    async getLikesByActorAndSubjects({
+        actorDid,
+        refs
+      }) {
+        return {uris: []}
+      }
 }
 
 function lookupUri(data, state: HydrationState) {
