@@ -161,20 +161,25 @@ function lookupUri(data, state: HydrationState) {
     state.postAggs ??= new HydrationMap<PostAgg>()
     state.actors ??= new HydrationMap<Actor>()
     state.threadContexts ??= new HydrationMap<ThreadContext>()
+
+    if (data?.threadContext?.rootAuthorLike) {
+        state.threadContexts.set(data.post.uri, {like: data?.threadContext?.rootAuthorLike})
+    }
+
+    if (data.did && data.handle) {
+        let profile_cid = data.avatar.split(`${data.did}/`)[1].split('@')[0]
+        state.actors.set(data.did, {
+            did: data.did,
+            handle: data.handle,
+            profile: {record: {...data, avatar: {cid: profile_cid}}, cid: profile_cid} as any,
+            isLabeler: false,
+            priorityNotifications: false
+        })
+    }
+
     for (let key in data) {
         if (data.hasOwnProperty(key)) {
             let value = data[key]
-
-            if (data.did && data.handle) {
-                let profile_cid = data.avatar.split(`${data.did}/`)[1].split('@')[0]
-                state.actors.set(data.did, {
-                    did: data.did,
-                    handle: data.handle,
-                    profile: {record: {...data, avatar: {cid: profile_cid}}, cid: profile_cid} as any,
-                    isLabeler: false,
-                    priorityNotifications: false
-                })
-            }
 
             if (key === 'uri' && (data.record || data.value || data.notFound)) {
                 if (data.record) uris.push(value)

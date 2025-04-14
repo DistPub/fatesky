@@ -655,6 +655,8 @@ export class Hydrator {
         threadRoot: post.record.reply?.root.uri ?? uri,
       }))
 
+    if (ctx.state.threadContexts) return mergeStates(postsState, { threadContexts: ctx.state.threadContexts })
+
     const threadContexts = await this.feed.getThreadContexts(threadRefs)
 
     return mergeStates(postsState, { threadContexts })
