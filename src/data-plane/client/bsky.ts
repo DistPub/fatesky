@@ -6,8 +6,9 @@ import { HydrationMap } from "../../hydration/util"
 
 export class MockDataPlaneClient {
     constructor(private host: string) {}
-    async xrpc(handler, {params = {}, data = null}) {
-        let api = new URL(`https://${this.host}/xrpc/${handler}`)
+    async xrpc(handler, {params = {}, data = null, pds = undefined}) {
+        const origin = pds ?? `https://${this.host}`
+        let api = new URL(`${origin}/xrpc/${handler}`)
         let searchParams = new URLSearchParams()
         for (const [key, value] of Object.entries(params)) {
             if (Array.isArray(value)) {
@@ -110,14 +111,53 @@ export class MockDataPlaneClient {
     async getThreadMutesOnSubjects({ actorDid, threadRoots }) {
         return {muted: []}
     }
+
+    async getBlockedDids(actorDid, pds, cursor=undefined) {
+        const data = await this.xrpc('com.atproto.repo.listRecords', {params: {repo: actorDid, collection: 'app.bsky.graph.block', limit: 100, cursor}, pds}) as any
+        const block_dids = data.records.map(item => item.value.subject)
+
+        if (data.cursor) {
+            return block_dids.concat(await this.getBlockedDids(actorDid, pds, cursor))
+        }
+    }
+
+    async getBlockLists(actorDid, pds, cursor=undefined) {
+        const data = await this.xrpc('com.atproto.repo.listRecords', {params: {repo: actorDid, collection: 'app.bsky.graph.blocklist', limit: 100, cursor}, pds}) as any
+        const block_dids = data.records.map(item => item.value.subject)
+
+        if (data.cursor) {
+            return block_dids.concat(await this.getBlockLists(actorDid, pds, cursor))
+        }
+    }
+
+    async getBlockedDidsFromLists(actorDid, list, cursor=undefined) {
+        const data = await this.xrpc('app.bsky.graph.getLists', {params: {list, limit: 100, cursor}}) as any
+        const block_dids = data.items.map(item => item.subject.did)
+
+        if (data.cursor) {
+            return block_dids.concat(await this.getBlockedDidsFromLists(actorDid, list, cursor))
+        }
+    }
+
     async getRelationships({ actorDid, targetDids }) {
         const relationships: any[] = []
+
+        let block_dids: string[] = []
+        // todo: cache it in sqlite3, realtime query cost too long time
+        // const pds = (await this.getIdentityByDid({did: actorDid})).services['atproto_pds']
+        // block_dids = await this.getBlockedDids(actorDid, pds)
+        // const block_lists = await this.getBlockLists(actorDid, pds)
+        // for (let list of block_lists) {
+        //     block_dids = block_dids.concat(await this.getBlockedDidsFromLists(actorDid, list))
+        // }
+        // console.log(block_dids)
+
         for (let target of targetDids) {
             relationships.push({
-                // actor set to target
+                // actor==viewer set to target
                 muted: null,
                 mutedByList: '',
-                blockedBy: '',
+                blockedBy: block_dids.indexOf(target) > -1 ? actorDid : '',
                 blockedByList: '',
                 followedBy: '',
                 // target set to actor
@@ -131,6 +171,7 @@ export class MockDataPlaneClient {
     async getIdentityByDid({ did }) {
         const doc = await resolveDidDoc(did)
         const keys = {}
+        const services = {}
         for (let item of doc.verificationMethod) {
             let id = item.id.split('#')[1]
             keys[id] = {
@@ -138,7 +179,11 @@ export class MockDataPlaneClient {
                 PublicKeyMultibase: item.publicKeyMultibase
             }
         }
-        return {keys}
+        for (let item of doc.service) {
+            let id = item.id.split('#')[1]
+            services[id] = item.serviceEndpoint
+        }
+        return {keys, services}
     }
 }
 
